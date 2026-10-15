@@ -1,0 +1,42 @@
+@host = https://localhost:7000
+@token = dev-token-123
+
+### 1. No token -> 401 {"error":"Unauthorized."} + WWW-Authenticate: Bearer
+GET {{host}}/api/users
+
+### 2. Wrong token -> 401
+GET {{host}}/api/users
+Authorization: Bearer wrong-token
+
+### 3. Wrong scheme -> 401
+GET {{host}}/api/users
+Authorization: Basic dev-token-123
+
+### 4. Empty bearer value -> 401
+GET {{host}}/api/users
+Authorization: Bearer 
+
+### 5. Valid token -> 200
+GET {{host}}/api/users
+Authorization: Bearer {{token}}
+
+### 6. Valid token, missing user -> 404 (handled by endpoint, still logged)
+GET {{host}}/api/users/9999
+Authorization: Bearer {{token}}
+
+### 7. Valid token, invalid body -> 400
+POST {{host}}/api/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "", "email": "bad", "department": "" }
+
+### 8. Unhandled exception -> 500 {"error":"Internal server error."} (Development only)
+GET {{host}}/api/_debug/throw
+Authorization: Bearer {{token}}
+
+### 9. Exception without a token -> 401, never reaches the endpoint
+GET {{host}}/api/_debug/throw
+
+### 10. Swagger UI reachable without token (Development only)
+GET {{host}}/swagger/index.html
